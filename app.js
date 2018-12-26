@@ -1,4 +1,5 @@
 let fs = require('fs');
+//let when  = require('node-promise').when;
 
 fs.readFile('data.txt', 'utf8', function(err, data) {
     if (err) throw err;
@@ -25,15 +26,85 @@ fs.readFile('data.txt', 'utf8', function(err, data) {
         }
     });
 
-    console.log(masterList);
     fillGuards(masterList);
-    //let guardList = createGuardObject(masterList);
+    processGuards(masterList);
+
+    masterList.forEach((item, index) => {
+       if (parseInt(item.guard) === 2753) {
+           console.log(item);
+       }
+    });
+
 });
 
+const processGuards = (masterList) => {
+    let guardArray = new Array();
+    masterList.forEach((value) => {
+            guardArray.push(value.guard);
+    });
+    guardArray.sort();
+    let distinctGuards = [...new Set(guardArray)];
+
+    //console.log('guard array', guardArray);
+    //console.log(masterList);
+
+    let bestMatch = {
+        guard : "",
+        totalSleepTime : 0
+    };
+
+    let currentGuard = [];
+
+    distinctGuards.forEach((value, index) => {
+
+        currentGuard = masterList.filter((listItem) => {
+            if ((listItem.guard === value) && (listItem.action !== 'start') ) {
+                return listItem;
+            }
+        });
+
+        let totalSleepTime = 0, sleepyTime;
+
+        for (let i = 1; i < currentGuard.length; i+=2){
+            sleepyTime = currentGuard[i].date - currentGuard[i-1].date;
+            sleepyTime = Math.round(((sleepyTime % 86400000) % 3600000) / 60000);
+            totalSleepTime += sleepyTime;
+        }
+
+        console.log(`Guard #${value} - Total Sleep: ${totalSleepTime}`);
+
+    });
+
+    //console.log(currentGuard);
+
+
+
+    /*for (let i = 0; i < masterList.length; i++){
+        if (masterList[i].action === 'start'){
+
+            // check to make sure this isn't the first guard being processed.
+            // push last guard object to guardArray so we can begin processing this new guard
+            if (guardList.length > 0){
+                guardList.push(currentGuard);
+            }
+
+            //set guard #
+            currentGuard.guard = masterList[i].guard;
+        } else if (masterList[i].action === 'wake') {
+            // get how long he was asleep
+            currentGuard.timeAsleep.push(masterList[i].date - masterList[i-1].date);
+            currentGuard.totalSleepTime += masterList[i].date - masterList[i-1].date;
+        }
+    } */
+
+};
+
 const fillGuards = (masterList) => {
+    // let defer = promise.defer();
+    // console.log('defer', defer);
     for (let i = 0; i < masterList.length; i++){
         if (masterList[i].guard === null) {
-            let lastGuardSeen = findLastGuard(i, masterList);
+            masterList[i].guard = findLastGuard(i, masterList);
         }
     }
 };
